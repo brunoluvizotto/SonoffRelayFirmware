@@ -41,6 +41,13 @@ WiFiServer server(80);
 //for LED status
 #include <Ticker.h>
 Ticker ticker;
+Ticker tickerOTA;
+Ticker tickerTCP;
+Ticker tickerPB;
+
+bool ota = 0;
+bool pb = 0;
+bool tcp = 0;
 
 const int CMD_WAIT = 0;
 const int CMD_BUTTON_CHANGE = 1;
@@ -61,6 +68,21 @@ void tick()
   //toggle state
   int state = digitalRead(SONOFF_LED);  // get the current state of GPIO1 pin
   digitalWrite(SONOFF_LED, !state);     // set pin to the opposite state
+}
+
+void tickOTA()
+{
+  ota = 1;
+}
+
+void tickTCP()
+{
+  tcp = 1;
+}
+
+void tickPB()
+{
+  pb = 1;
 }
 
 //gets called when WiFiManager enters configuration mode
@@ -191,97 +213,152 @@ void setup()
   });
   ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
     //Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-  noInterrupts();
+  });
+  ArduinoOTA.onError([](ota_error_t error) {
+    Serial.printf("Error[%u]: ", error);
+    if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+    else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+    else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+    else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+    else if (error == OTA_END_ERROR) Serial.println("End Failed");
+  });
+  
+  //ArduinoOTA.setPassword((const char *)"123456");
+  ArduinoOTA.setHostname(hostname);
+  ArduinoOTA.begin();
+
+  //if you get here you have connected to the WiFi
+  Serial.println("connected...yeey :)");
+  ticker.detach();
+  
+  // Start the server
+  server.begin();
+  Serial.println("Server started");
+  
+  // Print the IP address
+  Serial.print("Use this URL to connect: ");
+  Serial.print("http://");
+  Serial.print(WiFi.localIP());
+  Serial.println("/");
+
+  //setup button
+  pinMode(SONOFF_BUTTON, INPUT);
+  attachInterrupt(SONOFF_BUTTON, toggleState, CHANGE);
+
+  //setup relay
+  pinMode(SONOFF_RELAY, OUTPUT);
+
+  turnOff();
+  Serial.println("done setup");
+  
+  tickerOTA.attach(0.1, tickOTA);
+  tickerTCP.attach(0.05, tickTCP);
+  tickerPB.attach(0.1, tickPB);
+  
+  /*noInterrupts();
   timer0_isr_init();
   timer0_attachInterrupt(timer0_ISR);
   timer0_write(ESP.getCycleCount() + 8000000L); // 8MHz == 0.1sec
-  interrupts();
+  interrupts();*/
 }
 
-void timer0_ISR (void) 
+/*void timer0_ISR (void) 
 {
   //ota loop
-  ArduinoOTA.handle();
   timer0_write(ESP.getCycleCount() + 8000000L); // 80MHz == 0.1sec
-}
+}*/
 
 void loop()
 {
-  delay(5);
-
-  WiFiClient client = server.available();
-
-  if(client)
+  delay(40);
+  
+  if(ota)
   {
-    while(!client.available()){
-      delay(1);
-    }
-    if(client.available())
+    ota = 0;
+    ArduinoOTA.handle();
+  }
+
+  if(tcp)
+  {
+    tcp = 0;
+    WiFiClient client = server.available();
+
+    if(client)
     {
-      // Read the first line of the request
-      String request = client.readStringUntil('\r');
-      Serial.println(request);
-      client.flush();
-
-      int value = LOW;
-      bool valid = false;
-      if (request.indexOf("/DO0=0") != -1)  {
-        turnOff();
-        value = LOW;
-        valid = true;
-      }   
-      else if (request.indexOf("/DO0=1") != -1)  {
-        turnOn();
-        value = HIGH;
-        valid = true;
+      /*while(!client.available()){
+        delay(1);
+      }*/
+      delay(10);
+      if(client.available())
+      {
+        // Read the first line of the request
+        String request = client.readStringUntil('\r');
+        Serial.println(request);
+        client.flush();
+  
+        int value = LOW;
+        bool valid = false;
+        if (request.indexOf("/DO0=0") != -1)  {
+          turnOff();
+          value = LOW;
+          valid = true;
+        }   
+        else if (request.indexOf("/DO0=1") != -1)  {
+          turnOn();
+          value = HIGH;
+          valid = true;
+        }
+  
+        // Return the response
+        client.println("HTTP/1.1 200 OK");
+        client.println("Content-Type: text/html");
+        client.println(""); //  do not forget this one
+        client.println("<!DOCTYPE HTML>");
+        client.println("<html>");
+  
+        client.print("DO0=");
+   
+        if(relayState == HIGH) {
+          client.print("1");
+        } else {
+          client.print("0");
+        }
+        client.println("<br><br>");
+        client.println("<a href=\"/DO0=1\"\"><button>Turn On </button></a>");
+        client.println("<a href=\"/DO0=0\"\"><button>Turn Off </button></a><br />");  
+        client.println("</html>");
       }
-
-      // Return the response
-      client.println("HTTP/1.1 200 OK");
-      client.println("Content-Type: text/html");
-      client.println(""); //  do not forget this one
-      client.println("<!DOCTYPE HTML>");
-      client.println("<html>");
-
-      client.print("Output is now: ");
- 
-      if(relayState == HIGH) {
-        client.print("On");
-      } else {
-        client.print("Off");
-      }
-      client.println("<br><br>");
-      client.println("<a href=\"/DO0=1\"\"><button>Turn On </button></a>");
-      client.println("<a href=\"/DO0=0\"\"><button>Turn Off </button></a><br />");  
-      client.println("</html>");
     }
   }
-  
-  switch (cmd) {
-    case CMD_WAIT:
-      break;
-    case CMD_BUTTON_CHANGE:
-      int currentState = digitalRead(SONOFF_BUTTON);
-      if (currentState != buttonState) {
-        if (buttonState == LOW && currentState == HIGH) {
-          long duration = millis() - startPress;
-          if (duration < 1000) {
-            Serial.println("short press - toggle relay");
-            toggle();
-          } else if (duration < 5000) {
-            Serial.println("medium press - reset");
-            restart();
-          } else if (duration < 60000) {
-            Serial.println("long press - reset settings");
-            reset();
+
+  if(pb)
+  {
+    pb = 0;
+    switch (cmd) {
+      case CMD_WAIT:
+        break;
+      case CMD_BUTTON_CHANGE:
+        int currentState = digitalRead(SONOFF_BUTTON);
+        if (currentState != buttonState) {
+          if (buttonState == LOW && currentState == HIGH) {
+            long duration = millis() - startPress;
+            if (duration < 1000) {
+              //Serial.println("short press - toggle relay");
+              toggle();
+            } else if (duration < 5000) {
+              //Serial.println("medium press - reset");
+              restart();
+            } else if (duration < 60000) {
+              //Serial.println("long press - reset settings");
+              reset();
+            }
+          } else if (buttonState == HIGH && currentState == LOW) {
+            startPress = millis();
           }
-        } else if (buttonState == HIGH && currentState == LOW) {
-          startPress = millis();
+          buttonState = currentState;
         }
-        buttonState = currentState;
-      }
-      break;
+        break;
+    }
   }
-  
 
 }
