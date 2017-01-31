@@ -37,6 +37,9 @@ WMSettings settings;
 #include <WiFiUdp.h>
 
 WiFiServer server(80);
+WiFiServer serverTcp(2211);
+WiFiClient client;
+WiFiClient clientTcp;
 
 //for LED status
 #include <Ticker.h>
@@ -233,6 +236,7 @@ void setup()
   
   // Start the server
   server.begin();
+  serverTcp.begin();
   Serial.println("Server started");
   
   // Print the IP address
@@ -281,53 +285,76 @@ void loop()
   if(tcp)
   {
     tcp = 0;
-    WiFiClient client = server.available();
+    client = server.available();
+    
+    if(!clientTcp.connected())
+      clientTcp = serverTcp.available();
 
-    if(client)
+    delay(10);
+    
+    if(client.available())
     {
-      /*while(!client.available()){
-        delay(1);
-      }*/
-      delay(10);
-      if(client.available())
-      {
-        // Read the first line of the request
-        String request = client.readStringUntil('\r');
-        Serial.println(request);
-        client.flush();
-  
-        int value = LOW;
-        bool valid = false;
-        if (request.indexOf("/DO0=0") != -1)  {
-          turnOff();
-          value = LOW;
-          valid = true;
-        }   
-        else if (request.indexOf("/DO0=1") != -1)  {
-          turnOn();
-          value = HIGH;
-          valid = true;
-        }
-  
-        // Return the response
-        client.println("HTTP/1.1 200 OK");
-        client.println("Content-Type: text/html");
-        client.println(""); //  do not forget this one
-        client.println("<!DOCTYPE HTML>");
-        client.println("<html>");
-  
-        client.print("DO0=");
-   
-        if(relayState == HIGH) {
-          client.print("1");
-        } else {
-          client.print("0");
-        }
-        client.println("<br><br>");
-        client.println("<a href=\"/DO0=1\"\"><button>Turn On </button></a>");
-        client.println("<a href=\"/DO0=0\"\"><button>Turn Off </button></a><br />");  
-        client.println("</html>");
+      // Read the first line of the request
+      String request = client.readStringUntil('\r');
+      Serial.println(request);
+      client.flush();
+
+      int value = LOW;
+      bool valid = false;
+      if (request.indexOf("/DO0=0") != -1)  {
+        turnOff();
+        value = LOW;
+        valid = true;
+      }   
+      else if (request.indexOf("/DO0=1") != -1)  {
+        turnOn();
+        value = HIGH;
+        valid = true;
       }
+
+      // Return the response
+      client.println("HTTP/1.1 200 OK");
+      client.println("Content-Type: text/html");
+      client.println(""); //  do not forget this one
+      client.println("<!DOCTYPE HTML>");
+      client.println("<html>");
+
+      client.print("DO0=");
+ 
+      if(relayState == HIGH) {
+        client.print("1");
+      } else {
+        client.print("0");
+      }
+      client.println("<br><br>");
+      client.println("<a href=\"/DO0=1\"\"><button>Turn On </button></a>");
+      client.println("<a href=\"/DO0=0\"\"><button>Turn Off </button></a><br />");  
+      client.println("</html>");
+    }
+    
+    if(clientTcp.available())
+    {
+      String request = clientTcp.readStringUntil('\n');
+      //Serial.println(request);
+      clientTcp.flush();
+        
+      if (request.indexOf("DO0=0") != -1)  {
+        turnOff();
+        clientTcp.println("OK");
+      }   
+      else if (request.indexOf("DO0=1") != -1)  {
+        turnOn();
+        clientTcp.println("OK");
+      }   
+      
+      else if (request.indexOf("DO0?") != -1)  {
+        clientTcp.print("DO0=");
+        if(relayState == HIGH) {
+          clientTcp.println("1");
+        } else {
+          clientTcp.println("0");
+        }
+      }   
     }
   }
 
