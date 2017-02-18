@@ -5,12 +5,16 @@
 #include "dimmer_updater.hpp"
 #include "dimmer_listerner.hpp"
 
-std::vector<std::unique_ptr<Luvitronics::Task>> tasks;
+using namespace Luvitronics;
+std::vector<std::unique_ptr<Task>> tasks;
 
 void setup() {
-    tasks.emplace_back(new Luvitronics::DimmerWifi());
-    tasks.emplace_back(new Luvitronics::DimmerUpdater());
-    tasks.emplace_back(new Luvitronics::DimmerListener(80));
+    Luvitronics::Task* ts[] = {
+        new DimmerWifi(),
+        new DimmerUpdater(),
+        new DimmerListener(80)
+    };
+    for (auto t : ts) tasks.emplace_back(t);
     
     pinMode(0, INPUT);
     pinMode(2, OUTPUT);
