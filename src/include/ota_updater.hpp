@@ -15,7 +15,7 @@ namespace Luvitronics
         OTAUpdater();
         ~OTAUpdater();
         
-        virtual void process();
+        virtual void process() override;
     };
 }
 
