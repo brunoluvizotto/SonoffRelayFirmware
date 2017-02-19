@@ -1,4 +1,5 @@
 #include "dimmer_updater.hpp"
+#include "pin.hpp"
 
 Luvitronics::DimmerUpdater::DimmerUpdater() : OTAUpdater()
 {
@@ -8,9 +9,7 @@ Luvitronics::DimmerUpdater::DimmerUpdater() : OTAUpdater()
 
 void Luvitronics::DimmerUpdater::progressFunction(unsigned int, unsigned int)
 {
-    static bool flipflop = false;
-    digitalWrite(LED_BUILTIN, flipflop);
-    flipflop = !flipflop;
+    Pin<LED_BUILTIN>::digitalInvert();
 }
 
 void Luvitronics::DimmerUpdater::endFunction()

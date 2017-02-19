@@ -1,4 +1,5 @@
 #include "dimmer_wifi.hpp"
+#include "pin.hpp"
 
 #include <ESP8266WiFi.h>
 
@@ -14,10 +15,7 @@ void Luvitronics::DimmerWifi::process()
     static bool connected = false;
     
     while (WiFi.status() != WL_CONNECTED) {
-        static int flipflop = HIGH;
-        digitalWrite(LED_BUILTIN, flipflop);
-        flipflop = !flipflop;
-        
+        Pin<LED_BUILTIN>::digitalInvert();
         connected = false;
         delay(50);
     }
