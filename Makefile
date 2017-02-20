@@ -132,7 +132,7 @@ CORE_LIB = $(BUILD_DIR)/arduino.ar
 
 # User defined compilation units and directories
 # Automatically find directories with header files used by the sketch
-MAIN_DIR = $(dir $(MAIN))
+MAIN_DIR = $(dir $(MAIN))/..
 USR_FILES := $(shell find $(MAIN_DIR) -name "*.S" -o -name "*.c" -o -name "*.cpp" -o -name "*.h" -o -name "*.hpp")
 LIBS = $(sort $(foreach SRC_FILE,$(USR_FILES),$(shell perl -e 'use File::Find;$$d = shift;while (<>) {$$f{"$$1"} = 1 if /^\s*\#include\s+[<"]([^>"]+)/;}find(sub {print $$File::Find::dir," " if $$f{$$_}}, $$d);' $(ESP_LIBS) $(SRC_FILE))))
 INC_FILES := $(shell find $(MAIN_DIR) $(LIBS) -name "*.h" -o -name "*.hpp")
