@@ -4,17 +4,22 @@
 #include "dimmer_pins.hpp"
 #include "dimmer_wifi.hpp"
 #include "dimmer_updater.hpp"
-#include "dimmer_listerner.hpp"
+#include "http_listener.hpp"
+
+#include "dimmer_info_http_processor.hpp"
 
 using namespace Luvitronics;
-std::vector<std::unique_ptr<Task>> tasks;
+std::vector<Task*> tasks;
 
 void setup() {
+    auto listener = new HttpListener(80);
+    listener->registerProcessor("/info", new DimmerInfoHttpProcessor());
+    
     Luvitronics::Task* ts[] = {
         new DimmerPins(),
         new DimmerWifi(),
         new DimmerUpdater(),
-        new DimmerListener(80)
+        listener
     };
     for (auto t : ts) tasks.emplace_back(t);
 }

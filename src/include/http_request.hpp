@@ -3,26 +3,33 @@
 
 #include <Arduino.h>
 
+#include <map>
+#include <memory>
+
 namespace Luvitronics
 {
     class HttpRequest
     {
     public:
-        static Luvitronics::HttpRequest create(const String& input);
+        typedef std::map<std::string,std::string> QueryString;
+        enum class Type { Get, Post, Put, Patch, Delete, Invalid };
         
-        const String method() { return _method; }
-        const String path() { return _path; }
-        const String version() { return _version; }
-        const bool& valid() { return _valid; }
+        static std::unique_ptr<HttpRequest> create(const String& input);
+        
+        const Type type() const { return _type; };
+        const String path() const { return _path; }
+        const String version() const { return _version; }
+        const QueryString queryString() const { return _queryString; }
+        
+    protected:
+        HttpRequest(const Type type, const String& path = "", const String& version = "",
+                    const QueryString& queryString = QueryString());
         
     private:
-        HttpRequest(const String& method, const String& path,
-                    const String& version, const bool& valid = true);
-        
-        String _method;
-        String _path;
-        String _version;
-        bool _valid;
+        Type _type;
+        const String _path;
+        const String _version;
+        const QueryString _queryString;
     };
 }
 
