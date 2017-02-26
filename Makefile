@@ -21,9 +21,8 @@
 
 FLASH_DEF := 1M64
 
-.PHONE: echo
-echo:
-	echo $(CXX_FLAGS)
+C_FLAGS += -Wfatal-errors
+CXX_FLAGS += -Wfatal-errors
 
 CHIP ?= esp8266
 
