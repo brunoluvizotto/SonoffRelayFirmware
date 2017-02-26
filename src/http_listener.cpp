@@ -10,13 +10,14 @@ Luvitronics::HttpListener::HttpListener(uint16_t port)
     _server.begin();
 }
 
-void Luvitronics::HttpListener::registerProcessor(String endpoint, HttpProcessor* processor)
+void Luvitronics::HttpListener::registerProcessor(String endpoint, RequestProcessor* processor)
 {
-    _processorMap.emplace(std::make_pair(endpoint, std::unique_ptr<HttpProcessor>(processor)));
+    auto processor_ptr = std::unique_ptr<RequestProcessor>(processor);
+    registerProcessor(endpoint, processor_ptr);
 }
 
 void Luvitronics::HttpListener::registerProcessor(String endpoint,
-                                                    std::unique_ptr<HttpProcessor>& processor)
+                                                  std::unique_ptr<RequestProcessor>& processor)
 {
     _processorMap.emplace(endpoint, std::move(processor));
 }
@@ -35,7 +36,7 @@ void Luvitronics::HttpListener::process() {
     auto response = HttpResponse(client);
     
     auto processor = _processorMap.find(request->path());
-    if (processor != _processorMap.end())
+    if (processor != _processorMap.end()) 
         processor->second->process(*request, response);
     else
         response = 404;

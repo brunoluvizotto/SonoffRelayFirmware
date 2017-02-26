@@ -15,7 +15,7 @@ void Luvitronics::DimmerWifi::process()
     static bool connected = false;
     
     while (WiFi.status() != WL_CONNECTED) {
-        Pin<LED_BUILTIN>::digitalInvert();
+        Pin(LED_BUILTIN).digitalInvert();
         connected = false;
         delay(50);
     }

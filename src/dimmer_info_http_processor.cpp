@@ -1,24 +1,21 @@
 #include "dimmer_info_http_processor.hpp";
+#include "json_writer.hpp"
 
 Luvitronics::DimmerInfoHttpProcessor::DimmerInfoHttpProcessor()
     : Luvitronics::HttpProcessor() {}
 
 bool Luvitronics::DimmerInfoHttpProcessor::processGet(const Luvitronics::HttpRequest&, HttpResponse& response)
 {
-    response = 200;
+    JsonWriter json(response);
     
-    response << "Core version: ";
-    response << ESP.getCoreVersion() << "\r\n";
-    response << "Chip id: ";
-    response << ESP.getChipId() << "\r\n";
-    response << "Flash size: ";
-    response << ESP.getFlashChipSize() << "\r\n";
-    response << "Flash speed: ";
-    response << ESP.getFlashChipSpeed() << "\r\n";
-    response << "CPU frequency (MHz): ";
-    response << ESP.getCpuFreqMHz() << "\r\n";
-    response << "free memory: ";
-    response << ESP.getFreeSketchSpace() << "\r\n";
-    response << "Free heap: ";
-    response << ESP.getFreeHeap() << "\r\n";
+    using std::make_pair;
+    json << make_pair("core_version:", ESP.getCoreVersion());
+    json << make_pair("chip_id:", ESP.getChipId());
+    json << make_pair("flash_size:", ESP.getFlashChipSize());
+    json << make_pair("flash_speed:", ESP.getFlashChipSpeed());
+    json << make_pair("cpu_frequency:", ESP.getCpuFreqMHz());
+    json << make_pair("free_memory:", ESP.getFreeSketchSpace());
+    json << make_pair("free_heap:", ESP.getFreeHeap());
+    
+    return true;
 }

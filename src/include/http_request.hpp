@@ -17,17 +17,19 @@ namespace Luvitronics
         static std::unique_ptr<HttpRequest> create(const String& input);
         
         const Type type() const { return _type; };
-        const String path() const { return _path; }
-        const String version() const { return _version; }
+        const String& path() const { return _path; }
+        const String& object() const { return _object; }
+        const String& version() const { return _version; }
         const QueryString queryString() const { return _queryString; }
         
     protected:
-        HttpRequest(const Type type, const String& path = "", const String& version = "",
-                    const QueryString& queryString = QueryString());
+        HttpRequest(const Type type, const String& path = "", const String& object = "",
+                    const String& version = "", const QueryString& queryString = QueryString());
         
     private:
         Type _type;
         const String _path;
+        const String _object;
         const String _version;
         const QueryString _queryString;
     };

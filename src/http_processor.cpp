@@ -1,9 +1,6 @@
 #include "http_processor.hpp"
 
-Luvitronics::HttpProcessor::HttpProcessor() {}
-
 Luvitronics::HttpProcessor::~HttpProcessor() {}
-
 
 bool Luvitronics::HttpProcessor::process(const Luvitronics::HttpRequest& request, HttpResponse& response)
 {

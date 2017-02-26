@@ -9,10 +9,10 @@ Luvitronics::DimmerUpdater::DimmerUpdater() : OTAUpdater()
 
 void Luvitronics::DimmerUpdater::progressFunction(unsigned int, unsigned int)
 {
-    Pin<LED_BUILTIN>::digitalInvert();
+    Pin(LED_BUILTIN).digitalInvert();
 }
 
 void Luvitronics::DimmerUpdater::endFunction()
 {
-    digitalWrite(LED_BUILTIN, HIGH);
+    Pin(LED_BUILTIN).digitalWrite(HIGH);
 }

@@ -1,12 +1,13 @@
 #include "http_request.hpp"
+#include "utils.hpp"
 
 Luvitronics::HttpRequest::HttpRequest(const Luvitronics::HttpRequest::Type type,
                                       const String& path,
+                                      const String& object,
                                       const String& version,
                                       const Luvitronics::HttpRequest::QueryString& queryString)
-    : _type(type), _path(path), _version(version), _queryString(queryString)
-{
-}
+    : _type(type), _path(path), _object(object), _version(version), _queryString(queryString)
+{}
 
 std::unique_ptr<Luvitronics::HttpRequest> Luvitronics::HttpRequest::create(const String& input)
 {
@@ -26,15 +27,17 @@ std::unique_ptr<Luvitronics::HttpRequest> Luvitronics::HttpRequest::create(const
                 method = input.substring(0, i);
             else if (separator_count == 2)
                 path = input.substring(last_separator +1, i);
-            else if (separator_count == 3)
+            else if (separator_count == 3) {
                 version = input.substring(last_separator +1, i);
-            else
                 break;
+            }
         }
         
         if (in_separator)
             last_separator = i;
     }
+    
+    String object = Utils::processFullPath(path);
     
     Type type;
     if (method.equalsIgnoreCase("Get"))
@@ -50,6 +53,6 @@ std::unique_ptr<Luvitronics::HttpRequest> Luvitronics::HttpRequest::create(const
     else
         type = Type::Invalid;
     
-    return std::unique_ptr<HttpRequest>(new HttpRequest(type, path, version));
+    return std::unique_ptr<HttpRequest>(new HttpRequest(type, path, object, version));
 }
 

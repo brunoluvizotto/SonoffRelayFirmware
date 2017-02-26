@@ -3,18 +3,17 @@
 
 #include <Arduino.h>
 
-#include "http_response.hpp"
-#include "http_request.hpp"
+#include "request_processor.hpp"
 
 namespace Luvitronics
 {
-    class HttpProcessor
+    class HttpProcessor : public RequestProcessor
     {
     public:
-        HttpProcessor();
+        HttpProcessor() : RequestProcessor() {}
         virtual ~HttpProcessor() = 0;
         
-        bool process(const HttpRequest& request, HttpResponse& response);
+        virtual bool process(const HttpRequest& request, HttpResponse& response) override;
         
     protected:
         virtual bool processGet(const HttpRequest& request, HttpResponse& response);
@@ -23,8 +22,7 @@ namespace Luvitronics
         virtual bool processPatch(const HttpRequest& request, HttpResponse& response);
         virtual bool processDelete(const HttpRequest& request, HttpResponse& response);
         
-    private:
-        bool defaultProcessHandler(const HttpRequest& request, HttpResponse& response);
+        virtual bool defaultProcessHandler(const HttpRequest& request, HttpResponse& response);
     };
 }
 
