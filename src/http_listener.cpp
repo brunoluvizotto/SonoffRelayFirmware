@@ -22,6 +22,24 @@ void Luvitronics::HttpListener::registerProcessor(String endpoint,
     _processorMap.emplace(endpoint, std::move(processor));
 }
 
+namespace {
+    void dump_request(const Luvitronics::HttpRequest& request, Luvitronics::HttpResponse& response)
+    {
+        response = 200;
+        response << "type: " << (int)request.type() << '\n';
+        response << "path: " << request.path() << '\n';
+        response << "object: " << request.object() << '\n';
+        response << "version: " << request.version() << '\n' << '\n';
+        
+        for (const auto& pair : request.options()) {
+            response << pair.first << " -> " << pair.second << '\n';
+        }
+        
+        response << '\n' << request.body();
+        return;
+    }
+}
+
 void Luvitronics::HttpListener::process() {
     auto client = _server.available();
     
@@ -31,8 +49,7 @@ void Luvitronics::HttpListener::process() {
     while (!client.available())
         delay(1);
     
-    auto line = client.readStringUntil('\n');
-    auto request = HttpRequest::create(line);
+    auto request = HttpRequest::create(client);
     auto response = HttpResponse(client);
     
     auto processor = _processorMap.find(request->path());

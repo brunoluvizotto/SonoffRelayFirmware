@@ -1,4 +1,5 @@
 #include "rest_processor.hpp"
+#include "json_writer.hpp"
 
 Luvitronics::RestProcessor::~RestProcessor() {}
 
@@ -9,22 +10,22 @@ bool Luvitronics::RestProcessor::process(const Luvitronics::HttpRequest& request
         JsonWriter json(response);
         using std::make_pair;
         json = 404;
-        json << make_pair("error", "object not found");
-        json << make_pair("object", request.object());
+        json << make_pair("error", "request not found");
+        json << make_pair("request", request.object());
         return true;
     }
     
-    JsonWriter json(response);
+    HttpResponse json(response);
     if (request.type() == HttpRequest::Type::Get)
-        return processGet(request.object(), json);
+        return processGet(request, json);
     else if (request.type() == HttpRequest::Type::Post)
-        return processPost(request.object(), json);
+        return processPost(request, json);
     else if (request.type() == HttpRequest::Type::Put)
-        return processPut(request.object(), json);
+        return processPut(request, json);
     else if (request.type() == HttpRequest::Type::Patch)
-        return processPatch(request.object(), json);
+        return processPatch(request, json);
     else if (request.type() == HttpRequest::Type::Delete)
-        return processDelete(request.object(), json);
+        return processDelete(request, json);
     
     return false;
 }
@@ -34,33 +35,33 @@ bool Luvitronics::RestProcessor::objectValidator(const String&)
     return false;
 }
 
-bool Luvitronics::RestProcessor::defaultProcessHandler(const String&, Luvitronics::JsonWriter& response)
+bool Luvitronics::RestProcessor::defaultProcessHandler(const HttpRequest&, Luvitronics::HttpResponse& response)
 {
     response = 405;
     return true;
 }
 
-bool Luvitronics::RestProcessor::processGet(const String& object, Luvitronics::JsonWriter& response)
+bool Luvitronics::RestProcessor::processGet(const HttpRequest& request, Luvitronics::HttpResponse& response)
 {
-    defaultProcessHandler(object, response);
+    defaultProcessHandler(request, response);
 }
 
-bool Luvitronics::RestProcessor::processPost(const String& object, Luvitronics::JsonWriter& response)
+bool Luvitronics::RestProcessor::processPost(const HttpRequest& request, Luvitronics::HttpResponse& response)
 {
-    defaultProcessHandler(object, response);
+    defaultProcessHandler(request, response);
 }
 
-bool Luvitronics::RestProcessor::processPut(const String& object, Luvitronics::JsonWriter& response)
+bool Luvitronics::RestProcessor::processPut(const HttpRequest& request, Luvitronics::HttpResponse& response)
 {
-    defaultProcessHandler(object, response);
+    defaultProcessHandler(request, response);
 }
 
-bool Luvitronics::RestProcessor::processPatch(const String& object, Luvitronics::JsonWriter& response)
+bool Luvitronics::RestProcessor::processPatch(const HttpRequest& request, Luvitronics::HttpResponse& response)
 {
-    defaultProcessHandler(object, response);
+    defaultProcessHandler(request, response);
 }
 
-bool Luvitronics::RestProcessor::processDelete(const String& object, Luvitronics::JsonWriter& response)
+bool Luvitronics::RestProcessor::processDelete(const HttpRequest& request, Luvitronics::HttpResponse& response)
 {
-    defaultProcessHandler(object, response);
+    defaultProcessHandler(request, response);
 }

@@ -1,58 +1,34 @@
 #include "http_request.hpp"
-#include "utils.hpp"
 
 Luvitronics::HttpRequest::HttpRequest(const Luvitronics::HttpRequest::Type type,
                                       const String& path,
                                       const String& object,
                                       const String& version,
-                                      const Luvitronics::HttpRequest::QueryString& queryString)
-    : _type(type), _path(path), _object(object), _version(version), _queryString(queryString)
-{}
-
-std::unique_ptr<Luvitronics::HttpRequest> Luvitronics::HttpRequest::create(const String& input)
+                                      const Luvitronics::HttpRequest::QueryString& queryString,
+                                      const Luvitronics::HttpRequest::Options& options,
+                                      const String& body)
+    : _type(type), _path(path), _object(object), _version(version),
+      _queryString(queryString), _options(options), _body(body) {}
+      
+std::unique_ptr<Luvitronics::HttpRequest> Luvitronics::HttpRequest::create(Stream& input)
 {
-    unsigned separator_count = 0;
-    size_t last_separator;
-    bool in_separator = false;
-    String method, path, version;
+    String path, object, version;
+    Type method;
+    auto data(input.readStringUntil('\n'));
+    parseRequestLine(data, method, path, object, version);
     
-    for (size_t i = 0; i < input.length(); ++i) {
-        if (in_separator && input[i] != ' ')
-            in_separator = false;
-        
-        if (!in_separator && (input[i] == ' ' || input[i] == '\r')) {
-            in_separator = true;
-            
-            if (++separator_count == 1)
-                method = input.substring(0, i);
-            else if (separator_count == 2)
-                path = input.substring(last_separator +1, i);
-            else if (separator_count == 3) {
-                version = input.substring(last_separator +1, i);
-                break;
-            }
-        }
-        
-        if (in_separator)
-            last_separator = i;
-    }
+    if (method == HttpRequest::Type::Invalid)
+        return std::unique_ptr<HttpRequest>(new HttpRequest(method));
     
-    String object = Utils::processFullPath(path);
+    Options options;
+    for (data = input.readStringUntil('\n'); data != "\r"; data = input.readStringUntil('\n'))
+        parseOption(data, options);
     
-    Type type;
-    if (method.equalsIgnoreCase("Get"))
-        type = Type::Get;
-    else if (method.equalsIgnoreCase("Post"))
-        type = Type::Post;
-    else if (method.equalsIgnoreCase("Put"))
-        type = Type::Put;
-    else if (method.equalsIgnoreCase("Patch"))
-        type = Type::Patch;
-    else if (method.equalsIgnoreCase("Delete"))
-        type = Type::Delete;
-    else
-        type = Type::Invalid;
+    String body;
+    data = input.readString();
+    parseBody(data, body);
     
-    return std::unique_ptr<HttpRequest>(new HttpRequest(type, path, object, version));
+    return std::unique_ptr<HttpRequest>(new HttpRequest(method, path, object, version,
+                                                        QueryString(), options, body));
 }
 

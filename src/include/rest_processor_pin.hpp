@@ -11,8 +11,8 @@ namespace Luvitronics
         RestProcessorPin() {};
         
     protected:
-        bool processGet(const String& object, JsonWriter& response) override;
-        bool processPut(const String& object, JsonWriter& response) override;
+        bool processGet(const HttpRequest& object, HttpResponse& response) override;
+        bool processPut(const HttpRequest& object, HttpResponse& response) override;
         bool objectValidator(const String& object) override;
     };
 }

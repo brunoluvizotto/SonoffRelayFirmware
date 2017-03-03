@@ -3,29 +3,29 @@
 
 #include <Arduino.h>
 
-#include "request_processor.hpp"
-#include "json_writer.hpp"
+#include "http_processor.hpp"
+#include "http_response.hpp"
 
 namespace Luvitronics
 {
-    class RestProcessor : public RequestProcessor
+    class RestProcessor : public HttpProcessor
     {
     public:
-        RestProcessor() : RequestProcessor() {}
+        RestProcessor() : HttpProcessor() {}
         virtual ~RestProcessor() = 0;
         
         virtual bool process(const HttpRequest& request, HttpResponse& response) override;
         
     protected:
-        virtual bool processGet(const String& object, JsonWriter& response);
-        virtual bool processPost(const String& object, JsonWriter& response);
-        virtual bool processPut(const String& object, JsonWriter& response);
-        virtual bool processPatch(const String& object, JsonWriter& response);
-        virtual bool processDelete(const String& object, JsonWriter& response);
+        virtual bool processGet(const HttpRequest& request, HttpResponse& response) override;
+        virtual bool processPost(const HttpRequest& request, HttpResponse& response) override;
+        virtual bool processPut(const HttpRequest& request, HttpResponse& response) override;
+        virtual bool processPatch(const HttpRequest& request, HttpResponse& response) override;
+        virtual bool processDelete(const HttpRequest& request, HttpResponse& response) override;
         
-        virtual bool objectValidator(const String& object);
+        virtual bool defaultProcessHandler(const HttpRequest& request, HttpResponse& response) override;
         
-        virtual bool defaultProcessHandler(const String& object, JsonWriter& response);
+        virtual bool objectValidator(const String& request);
     };
 }
 

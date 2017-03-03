@@ -2,6 +2,7 @@
 #define UTILS_HPP
 
 #include <Arduino.h>
+#include <map>
 
 namespace Luvitronics
 {
